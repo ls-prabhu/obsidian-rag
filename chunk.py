@@ -49,23 +49,20 @@ for item in data:
     last_updated = item.get("last updated date&time", "")
     filepath = item.get("filepath", "")
 
-    content = re.sub(r'!\[\[.*?\]\]', '', content)   # Remove image embeds ![[image.png]]
-    content = re.sub(r'!\[.*?\]\(.*?\)', '', content) # Remove markdown images ![alt](url)
-    content = re.sub(r'\[\[.*?\]\]', '', content)    # Remove wiki links [[link]]
-
+    content = re.sub(r'!\[\[.*?\]\]', '', content)
+    content = re.sub(r'!\[.*?\]\(.*?\)', '', content)
+    content = re.sub(r'\[\[.*?\]\]', '', content)    
     if has_image_links(content):
         print(f"Warning: Image links still present in {filename}")
 
-    # Skip empty content
     if not content or not content.strip():
         continue
 
-    # Skip low-value index/navigation files
     if any(skip.lower() in filename.lower() for skip in SKIP_FILES):
         print(f"Skipping index file: {filename}")
         continue
 
-    # Skip files with very little real content (under 100 words)
+
     if len(content.split()) < 100:
         print(f"Skipping thin file ({len(content.split())} words): {filename}")
         continue
@@ -80,11 +77,11 @@ for item in data:
         h2 = meta.get("Header2", "")
         h3 = meta.get("Header3", "")
 
-        # Build heading breadcrumb
+
         heading_parts = [h for h in [h1, h2, h3] if h]
         heading_context = " > ".join(heading_parts) if heading_parts else filename
 
-        # Prepend heading context to the text — LLM reads this during retrieval
+
         enriched_text = f"[Source: {filename}]\n[Topic: {heading_context}]\n\n{chunk.page_content}"
 
         rag_chunk = {

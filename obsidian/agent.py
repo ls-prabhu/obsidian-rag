@@ -1,11 +1,20 @@
-import os
 import json
+import os
+import sys
 from pathlib import Path
+
 from google.adk.agents import Agent
-from google.adk.tools import google_search, FunctionTool
+from google.adk.tools import FunctionTool
+
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from embeddings import load_vector_store, similarity_search
 
-ROOT_DIR = Path(__file__).parent
+# Preload vector store at module level so the embedding model is loaded once at startup
+_vector_store = load_vector_store()
 AGENT_NAME = "obsidian_rag_agent"
 AGENT_DESCRIPTION = "Answers questions about your Obsidian notes using RAG"
 
@@ -76,11 +85,10 @@ Relevant chunks from your notes:
 Provide a helpful answer based on the context above."""
 
     try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            temperature=0.3,
-            google_api_key=os.getenv("GOOGLE_API_KEY")
+        from langchain_groq import ChatGroq
+        llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            api_key=os.getenv("GROQ_API_KEY")
         )
         messages = [
             SystemMessage(content=system_prompt),
@@ -123,15 +131,14 @@ def list_available_notes() -> dict:
     }
 
 
-obsidian_rag_agent = Agent(
+root_agent = Agent(
     name=AGENT_NAME,
-    model="gemini-2.0-flash",
+    model="groq/llama-3.1-8b-instant",
     description=AGENT_DESCRIPTION,
     tools=[
         FunctionTool(search_notes),
         FunctionTool(ask_question),
         FunctionTool(list_available_notes),
-        google_search,
     ],
     instruction="""You are a helpful assistant that helps the user answer questions about their Obsidian notes.
 
@@ -139,46 +146,6 @@ You have access to these tools:
 1. `ask_question` - Get a full RAG answer from the notes (recommended for most queries)
 2. `search_notes` - Search for relevant chunks without generating an answer  
 3. `list_available_notes` - See what notes are indexed
-4. `google_search` - Search the web for additional context
 
 For user questions about their notes, use `ask_question`. Use `search_notes` if you want to see raw chunks first. Use `list_available_notes` if the user wants to know what topics are available."""
 )
-
-
-if __name__ == "__main__":
-    from google.adk.runners import Runner
-    from google.adk.sessions import InMemorySessionService
-    from rich.console import Console
-    from rich.markdown import Markdown
-
-    console = Console()
-    session_service = InMemorySessionService()
-    runner = Runner(agent=obsidian_rag_agent, session_service=session_service)
-
-    session = session_service.create_session(app_name=AGENT_NAME, user_id="default")
-
-    console.print("[bold cyan]Obsidian RAG Agent[/bold cyan]")
-    console.print("Ask questions about your notes (or 'quit' to exit)\n")
-
-    while True:
-        try:
-            query = console.input("[bold green]>[/bold green] ")
-        except KeyboardInterrupt:
-            break
-
-        if query.strip().lower() in ["quit", "exit", "q"]:
-            break
-        if not query.strip():
-            continue
-
-        console.print("\n[dim]Thinking...[/dim]\n")
-
-        events = runner.run(user_id="default", session_id=session.id, new_message=query)
-
-        for event in events:
-            if event.content and hasattr(event.content, "parts"):
-                for part in event.content.parts:
-                    if hasattr(part, "text") and part.text:
-                        console.print(Markdown(part.text))
-                        break
-        console.print()

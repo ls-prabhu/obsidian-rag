@@ -21,7 +21,7 @@ Copy `.env.example` to `.env` and add your API keys:
 cp .env.example .env
 ```
 
-- `GOOGLE_API_KEY` - Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- `GROQ_API_KEY` - Get from [Groq Cloud](https://console.groq.com/keys)
 
 ## Pipeline Steps
 
@@ -49,14 +49,24 @@ python llm_answer.py
 
 CLI to test RAG answers directly.
 
+### Project Structure
+
+```
+obsidian/          # ADK agent directory
+├── __init__.py
+├── agent.py       # Agent definition with tools
+└── .env           # API key config
+```
+
 ### Hour 5: Run ADK Agent
 
 ```bash
-python agent.py
+adk run obsidian
+# or with a single query:
+adk run obsidian "your question"
 ```
 
-Starts an interactive agent that can:
+Starts an interactive agent (powered by `llama-3.1-8b-instant` / `llama-3.3-70b-versatile` via Groq) that can:
 - Answer questions about your notes (`ask_question`)
 - Search for relevant chunks (`search_notes`)
 - List available notes (`list_available_notes`)
-- Use web search as fallback (`google_search`)

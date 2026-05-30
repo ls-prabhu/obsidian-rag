@@ -1,9 +1,14 @@
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-VAULT_PATH = Path("/home/prabhu/Documents/obsidian")
+from dotenv import load_dotenv
+
+load_dotenv()
+
+VAULT_PATH = Path(os.getenv("VAULT_PATH", "/home/prabhu/Documents/obsidian"))
 OUTPUT_PATH = Path("obsidian_export.json")
 HEADING_PATTERN = re.compile(r"^(#{1,2})\s+(.*\S)\s*$")
 

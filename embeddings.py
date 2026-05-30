@@ -56,13 +56,18 @@ def build_vector_store():
         embedding=embeddings,
         persist_directory=str(VECTOR_STORE_DIR)
     )
-    vector_store.persist()
 
     print(f"Vector store saved to {VECTOR_STORE_DIR}")
     return vector_store
 
 
+_vector_store_cache = None
+
+
 def load_vector_store():
+    global _vector_store_cache
+    if _vector_store_cache is not None:
+        return _vector_store_cache
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"}
@@ -71,6 +76,7 @@ def load_vector_store():
         persist_directory=str(VECTOR_STORE_DIR),
         embedding_function=embeddings
     )
+    _vector_store_cache = vector_store
     return vector_store
 
 

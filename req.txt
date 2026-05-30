@@ -2,9 +2,11 @@ langchain-text-splitters
 langchain
 langchain-huggingface
 langchain-chroma
-langchain-google-genai
+langchain-groq
 sentence-transformers
 chromadb
 google-adk
 google-generativeai
 rich
+litellm
+python-dotenv

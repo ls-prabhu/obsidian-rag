@@ -38,3 +38,5 @@ ENV/
 rag_chunks.json
 vector_store/
 obsidian_export.json
+AGENTS.md
+obsidian/.adk/session.db
